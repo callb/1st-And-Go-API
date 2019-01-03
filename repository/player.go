@@ -29,7 +29,7 @@ func NewPlayerSqlRepository() PlayerSqlRepository {
 func (repo PlayerSqlRepository) GetPlayersBySearchText(searchText string) []domain.Player {
 	db := repo.getDbConn()
 	ctx := context.Background()
-	query := fmt.Sprintf("select name, teamAbbr from nfldata.dbo.PlayerStats where name like '%%%v%%'", searchText)
+	query := fmt.Sprintf("select name, teamAbbr from nfldata.dbo.Player where name like '%%%v%%'", searchText)
 	rows, err := db.QueryContext(ctx, query,
 		sql.Named("searchText", searchText))
 	utils.CheckForError(err)

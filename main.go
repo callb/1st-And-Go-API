@@ -4,7 +4,6 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 	"time"
-	"log"
 	"./repository"
 	"./update"
 	"gopkg.in/matryer/respond.v1"
@@ -26,9 +25,8 @@ func main() {
 
 
 	// Get the server information and start the server
-	server := getServer(router)
 	fmt.Println("Starting server...")
-	log.Fatal(server.ListenAndServe())
+	http.ListenAndServe(":8000", router)
 }
 
 // Init the ticker so data is updated in intervals
@@ -53,7 +51,7 @@ func getPlayersBySearchText(w http.ResponseWriter, r *http.Request) {
 func getServer(router http.Handler) http.Server {
 	srv := &http.Server {
 		Handler:      router,
-		Addr:         "127.0.0.1:8000",
+		Addr:         ":8000",
 		// Good practice: enforce timeouts for servers you create!
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
