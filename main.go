@@ -18,6 +18,7 @@ func main() {
 	// Initialize ticker for update data process
 	go startUpdateDataProcess()
 
+
 	router := mux.NewRouter()
 
 	/** API Routes **/
@@ -41,6 +42,7 @@ func startUpdateDataProcess() {
 
 // get all players whose first or last names start with the search text
 func getPlayersBySearchText(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	searchText := mux.Vars(r)["searchText"]
 	players := playerRepository.GetPlayersBySearchText(searchText)
 	respond.With(w, r, http.StatusOK, players)
@@ -58,4 +60,8 @@ func getServer(router http.Handler) http.Server {
 	}
 
 	return *srv
+}
+
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 }

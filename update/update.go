@@ -25,7 +25,7 @@ var (
 
 func StartUpdateDataProcess() {
 	// ** Comment this out and edit the global variables to run for more days than today **
-	setDateAsToday()
+	//setDateAsToday()
 
 	// Run for each day up through the current date
 	for !isDateTomorrow(gameDate) {
