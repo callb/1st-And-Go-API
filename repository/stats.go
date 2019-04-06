@@ -8,6 +8,7 @@ import (
 	"../utils"
 	"database/sql"
 	"context"
+	"fmt"
 )
 
 type StatsSqlRepository struct {
@@ -81,6 +82,19 @@ func (repo StatsSqlRepository) SavePlayerStats(key string, player domain.PlayerS
 		sql.Named("twoptm", receivingStats.TwoPointSuccesses),
 	)
 	utils.CheckForError(err)
+}
+
+
+func (repo StatsSqlRepository) SavePlayerStatsBatch(statsMap map[string]domain.PlayerStats) {
+	for playerKey, playerData := range statsMap {
+		fmt.Println(playerKey, playerData)
+	}
+}
+
+func MakePassingStatsTvp() {
+	//query :=
+	//	"DECLARE @r PassingStatsTvp\n" +
+	//	"INSERT INTO @r"
 }
 
 func (repo StatsSqlRepository) getDbConn() *sql.DB {

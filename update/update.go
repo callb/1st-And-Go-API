@@ -144,9 +144,12 @@ func saveGameData(data map[string]interface{}) {
 
 func saveStatsToDb(statsMap map[string]domain.PlayerStats) {
 	statsRepository := repository.NewStatsSqlRepository()
+	/**
 	for playerKey, playerData := range statsMap {
 		statsRepository.SavePlayerStats(playerKey, playerData)
 	}
+	**/
+	statsRepository.SavePlayerStatsBatch(statsMap)
 }
 
 // Get data for the team; home or away fields
