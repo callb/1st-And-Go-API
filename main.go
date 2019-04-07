@@ -16,7 +16,8 @@ var (
 
 func main() {
 	// Initialize ticker for update data process
-	go startUpdateDataProcess()
+	//go startUpdateDataProcess()
+	update.StartUpdateDataProcess()
 
 
 	router := mux.NewRouter()

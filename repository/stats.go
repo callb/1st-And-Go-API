@@ -9,10 +9,18 @@ import (
 	"database/sql"
 	"context"
 	"fmt"
+	"strings"
+	"time"
 )
 
 type StatsSqlRepository struct {
 	config Configuration
+}
+
+type tvpSaveData struct {
+	playerKey string
+	playerData domain.PlayerStats
+	statsType string
 }
 
 func NewStatsSqlRepository() StatsSqlRepository {
@@ -24,6 +32,14 @@ func NewStatsSqlRepository() StatsSqlRepository {
 		"database!",
 	}
 	return repo
+}
+
+func newTvpSaveData(playerKey string, playerData domain.PlayerStats, statsType string) tvpSaveData {
+	return tvpSaveData {
+		playerKey: playerKey,
+		playerData: playerData,
+		statsType: statsType,
+	}
 }
 
 func (repo StatsSqlRepository) SavePlayerStats(key string, player domain.PlayerStats) {
@@ -84,18 +100,95 @@ func (repo StatsSqlRepository) SavePlayerStats(key string, player domain.PlayerS
 	utils.CheckForError(err)
 }
 
-
+// Save the player stats in the given map of player key/id to player data
 func (repo StatsSqlRepository) SavePlayerStatsBatch(statsMap map[string]domain.PlayerStats) {
+	passingTvpSaveQuery := ""
+	rushingTvpSaveQuery := ""
+	receivingTvpSaveQuery := ""
+	// Iterate through each player in the player data and add to the save query
 	for playerKey, playerData := range statsMap {
-		fmt.Println(playerKey, playerData)
+		passingTvpSaveData := newTvpSaveData(playerKey, playerData, "passing")
+		passingTvpSaveQuery = addToStatsTvp(passingTvpSaveQuery, passingTvpSaveData)
+
+		rushingTvpSaveData := newTvpSaveData(playerKey, playerData, "rushing")
+		rushingTvpSaveQuery = addToStatsTvp(rushingTvpSaveQuery, rushingTvpSaveData)
+
+		receivingTvpSaveData := newTvpSaveData(playerKey, playerData, "receiving")
+		receivingTvpSaveQuery = addToStatsTvp(receivingTvpSaveQuery, receivingTvpSaveData)
 	}
+	fmt.Println(passingTvpSaveQuery)
+	fmt.Println(rushingTvpSaveQuery)
+	fmt.Println(receivingTvpSaveQuery)
 }
 
-func MakePassingStatsTvp() {
-	//query :=
-	//	"DECLARE @r PassingStatsTvp\n" +
-	//	"INSERT INTO @r"
+// Add the next line of data to the given tvp Query for saving stats
+func addToStatsTvp(tvpCurrQuery string, data tvpSaveData) string {
+	statsType := strings.ToLower(data.statsType)
+	newQueryLine := ""
+	gameDate := formatDateForQuery(data.playerData.GameDate)
+
+	// format the new query string line for the given data
+	switch statsType {
+	case "passing":
+		newQueryLine = fmt.Sprintf(
+			"select '%v', '%v', %v, %v, %v, %v, %v, %v, %v",
+			data.playerKey,
+			gameDate,
+			data.playerData.PassingStats.Attempts,
+			data.playerData.PassingStats.Completions,
+			data.playerData.PassingStats.Yards,
+			data.playerData.PassingStats.Touchdowns,
+			data.playerData.PassingStats.Interceptions,
+			data.playerData.PassingStats.TwoPointAttempts,
+			data.playerData.PassingStats.TwoPointSuccesses)
+		break
+	case "rushing":
+		newQueryLine = fmt.Sprintf(
+			"select '%v', '%v', %v, %v, %v, %v, %v, %v, %v",
+			data.playerKey,
+			gameDate,
+			data.playerData.RushingStats.Attempts,
+			data.playerData.RushingStats.Yards,
+			data.playerData.RushingStats.Touchdowns,
+			data.playerData.RushingStats.Longest,
+			data.playerData.RushingStats.LongestTouchdown,
+			data.playerData.RushingStats.TwoPointAttempts,
+			data.playerData.RushingStats.TwoPointSuccesses)
+		break
+	case "receiving":
+		newQueryLine = fmt.Sprintf(
+			"select '%v', '%v', %v, %v, %v, %v, %v, %v, %v",
+			data.playerKey,
+			gameDate,
+			data.playerData.ReceivingStats.Receptions,
+			data.playerData.ReceivingStats.Yards,
+			data.playerData.ReceivingStats.Touchdowns,
+			data.playerData.ReceivingStats.Longest,
+			data.playerData.ReceivingStats.LongestTouchdown,
+			data.playerData.ReceivingStats.TwoPointAttempts,
+			data.playerData.ReceivingStats.TwoPointSuccesses)
+	}
+
+	// If the current save query has no data, add initial tvp declaration
+	if len(tvpCurrQuery) == 0 {
+		tvpCurrQuery += fmt.Sprintf("DECLARE @r %vStatsTvp\n", statsType)
+		tvpCurrQuery += fmt.Sprintf("INSERT INTO @r")
+		tvpCurrQuery += fmt.Sprintf("\n%v", newQueryLine)
+		return tvpCurrQuery
+	}
+
+	// If more than 1 insert row, add in UNION then the new data
+	tvpCurrQuery += fmt.Sprintf(" UNION\n%v", newQueryLine)
+	return tvpCurrQuery
+
 }
+
+// Format the datetime for the save querystring
+func formatDateForQuery(dateTime time.Time) string {
+	year, month, day := dateTime.Date()
+	return fmt.Sprintf("%v %v, %v", month.String(), day, year)
+}
+
 
 func (repo StatsSqlRepository) getDbConn() *sql.DB {
 	config := repo.config
