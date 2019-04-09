@@ -102,6 +102,7 @@ func (repo StatsSqlRepository) SavePlayerStats(key string, player domain.PlayerS
 
 // Save the player stats in the given map of player key/id to player data
 func (repo StatsSqlRepository) SavePlayerStatsBatch(statsMap map[string]domain.PlayerStats) {
+	playerTvpSaveQuery := ""
 	passingTvpSaveQuery := ""
 	rushingTvpSaveQuery := ""
 	receivingTvpSaveQuery := ""
@@ -115,10 +116,36 @@ func (repo StatsSqlRepository) SavePlayerStatsBatch(statsMap map[string]domain.P
 
 		receivingTvpSaveData := newTvpSaveData(playerKey, playerData, "receiving")
 		receivingTvpSaveQuery = addToStatsTvp(receivingTvpSaveQuery, receivingTvpSaveData)
+
+		playerTvpSaveQuery = addToPlayerTvp(playerTvpSaveQuery, playerKey, playerData)
 	}
-	fmt.Println(passingTvpSaveQuery)
-	fmt.Println(rushingTvpSaveQuery)
-	fmt.Println(receivingTvpSaveQuery)
+
+	playerTvpSaveQuery += "\nexec SavePlayer @records = @r"
+	passingTvpSaveQuery += "\nexec SavePassingStats @records = @r"
+	rushingTvpSaveQuery += "\nexec SaveRushingStats @records = @r"
+	receivingTvpSaveQuery += "\nexec SaveReceivingStats @records = @r"
+
+	conn := repo.getDbConn()
+	defer conn.Close()
+	executeModifyQuery(*conn, playerTvpSaveQuery)
+	executeModifyQuery(*conn, passingTvpSaveQuery)
+	executeModifyQuery(*conn, rushingTvpSaveQuery)
+	executeModifyQuery(*conn, receivingTvpSaveQuery)
+
+}
+
+// Add the next line of data to the player tvp
+func addToPlayerTvp(tvpCurrQuery string, playerKey string, playerData domain.PlayerStats) string {
+	newQueryLine := fmt.Sprintf("\nSELECT %v, %v, %v", playerKey, playerData.Name, playerData.TeamAbbr)
+
+	if len(tvpCurrQuery) == 0 {
+		tvpCurrQuery += fmt.Sprintf("DECLARE @r PlayerTvp\n")
+		tvpCurrQuery += fmt.Sprintf("INSERT INTO @r %v", newQueryLine)
+		return tvpCurrQuery
+	}
+
+	tvpCurrQuery += fmt.Sprintf(" UNION %v", tvpCurrQuery)
+	return tvpCurrQuery
 }
 
 // Add the next line of data to the given tvp Query for saving stats
@@ -203,4 +230,13 @@ func (repo StatsSqlRepository) getDbConn() *sql.DB {
 	utils.CheckForError(err)
 
 	return conn
+}
+
+// execute a sql query that inserts or updates data and doesn't return any rows
+func executeModifyQuery(conn sql.DB, query string) {
+	ctx := context.Background()
+	if len(query) == 0 {
+		return
+	}
+	conn.QueryContext(ctx, query)
 }
