@@ -136,15 +136,15 @@ func (repo StatsSqlRepository) SavePlayerStatsBatch(statsMap map[string]domain.P
 
 // Add the next line of data to the player tvp
 func addToPlayerTvp(tvpCurrQuery string, playerKey string, playerData domain.PlayerStats) string {
-	newQueryLine := fmt.Sprintf("\nSELECT %v, %v, %v", playerKey, playerData.Name, playerData.TeamAbbr)
+	newQueryLine := fmt.Sprintf("\nSELECT '%v', '%v', '%v'", playerKey, playerData.Name, playerData.TeamAbbr)
 
 	if len(tvpCurrQuery) == 0 {
-		tvpCurrQuery += fmt.Sprintf("DECLARE @r PlayerTvp\n")
+		tvpCurrQuery += fmt.Sprintf("\nDECLARE @r PlayerTvp\n")
 		tvpCurrQuery += fmt.Sprintf("INSERT INTO @r %v", newQueryLine)
 		return tvpCurrQuery
 	}
 
-	tvpCurrQuery += fmt.Sprintf(" UNION %v", tvpCurrQuery)
+	tvpCurrQuery += fmt.Sprintf(" UNION %v", newQueryLine)
 	return tvpCurrQuery
 }
 

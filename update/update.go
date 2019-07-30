@@ -16,7 +16,7 @@ import (
 var (
 	// ** Modify year, month, day to run through the specified date up through today **
 	year = 2018
-	month = 11
+	month = 8
 	day = 1
 	gameNum = 0
 	gameDate = time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)

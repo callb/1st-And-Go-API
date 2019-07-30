@@ -19,7 +19,6 @@ func main() {
 	//go startUpdateDataProcess()
 	update.StartUpdateDataProcess()
 
-
 	router := mux.NewRouter()
 
 	/** API Routes **/
