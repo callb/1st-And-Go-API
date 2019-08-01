@@ -7,12 +7,12 @@ import (
 
 // All information for a particular player
 type PlayerStats struct {
-	Name string
-	TeamAbbr string
-	GameDate time.Time
-	PassingStats PassingStats
-	RushingStats RushingStats
-	ReceivingStats ReceivingStats
+	Name string `json:"name"`
+	TeamAbbr string `json:"teamAbbr"`
+	GameDate time.Time `json:"gameDate"`
+	PassingStats PassingStats `json:"passingStats"`
+	RushingStats RushingStats `json:"rushingStats"`
+	ReceivingStats ReceivingStats `json:"receivingStats"`
 }
 
 

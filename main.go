@@ -16,18 +16,19 @@ var (
 
 func main() {
 	// Initialize ticker for update data process
-	//go startUpdateDataProcess()
-	update.StartUpdateDataProcess()
+	go startUpdateDataProcess()
 
 	router := mux.NewRouter()
 
 	/** API Routes **/
 	router.HandleFunc("/api/search/player/{searchText}", getPlayersBySearchText)
+	router.HandleFunc("/api/player/{playerId}", getPlayerStatsByPlayerId)
+
 
 
 	// Get the server information and start the server
 	fmt.Println("Starting server...")
-	http.ListenAndServe(":8000", router)
+	http.ListenAndServe(":8080", router)
 }
 
 // Init the ticker so data is updated in intervals
@@ -46,6 +47,15 @@ func getPlayersBySearchText(w http.ResponseWriter, r *http.Request) {
 	searchText := mux.Vars(r)["searchText"]
 	players := playerRepository.GetPlayersBySearchText(searchText)
 	respond.With(w, r, http.StatusOK, players)
+}
+
+// get player data for a particular player id
+func getPlayerStatsByPlayerId(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+	playerId := mux.Vars(r)["playerId"]
+	playerData := playerRepository.GetPlayerStatsByPlayerId(playerId)
+	respond.With(w, r, http.StatusOK, playerData)
+
 }
 
 
